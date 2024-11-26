@@ -332,7 +332,7 @@
     .timelines:hover .timeLabel{
         opacity:1;
     }
-    #background {
+    .background {
         position: absolute;
         top: 50%;
         left: 50%;
@@ -343,7 +343,7 @@
         background-size: cover;
         background-position: center;
     }
-    #background::after{
+    .background::after{
         content: '';
         background-color: rgba(0, 0, 0, 0.2);
         position: absolute;
@@ -489,7 +489,7 @@
     }
 </style>
 <body>
-    <div id="background" style="z-index: 0;"></div>
+    <div class="background" style="z-index: 0;"></div>
     <div id="introScreen" style="display: block; opacity: 0;" style="overflow: hidden; ">
         <div class="container" style >
             <div style="color: #ffffff; margin-bottom: 40px; font-size: 60px; font-family:Arial, Helvetica, sans-serif;" style="overflow: hidden;">Study Roulette</div>
@@ -560,7 +560,7 @@
     </div>
     <div id="mainApp" style="display: none; overflow:hidden; opacity: 0;">
         <div id="threeJSRender">
-            <div id="background" style="z-index: 0; background-color: #6cdc71;"></div>
+            <div class="background" style="z-index: 0; background-color: #6cdc71;"></div>
         </div>
         <div id="tokenText" style="z-index: 5">Tokens: 5</div>
         <div id="endButton" style="z-index: 5">End</div>
@@ -808,13 +808,20 @@
 
         addMultipleEventListeners(document.getElementById("wallpaperButton"), "click touchstart",fade);
         addMultipleEventListeners(document.getElementById("wallpaper1"), "click touchstart",()=>{
-            document.getElementById("background").style.backgroundImage = "url('./assets/backsplash.png')";
+            document.querySelectorAll(".background").forEach(element =>{
+                element.style.backgroundImage = "url('./assets/backsplash.png')";
+            })
         });
         addMultipleEventListeners(document.getElementById("wallpaper2"), "click touchstart",()=>{
-            document.getElementById("background").style.backgroundImage = "url('./assets/backsplash2.png')";
+            document.querySelectorAll(".background").forEach(element =>{
+                element.style.backgroundImage = "url('./assets/backsplash2.png')";
+            })
         });
         addMultipleEventListeners(document.getElementById("wallpaper3"), "click touchstart",()=>{
-            document.getElementById("background").style.backgroundImage = "url('./assets/backsplash3.png')";
+            console.log("hel");
+            document.querySelectorAll(".background").forEach(element =>{
+                element.style.backgroundImage = "url('./assets/backsplash3.png')";
+            })
         });
         document.querySelectorAll('.optionContainer').forEach(element =>{
             element.addEventListener('click', function() {
