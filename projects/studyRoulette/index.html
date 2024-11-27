@@ -370,6 +370,35 @@
         color: var(--themeColor);
         user-select: none;
     }
+    #restart2{
+        position: absolute;
+        top: 85%;
+        right: 3%;
+        padding: 10px 30px;
+        background-color: rgba(255, 255, 255,0.95);
+        border-radius: 30px ;
+        font-size: 30px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        color: var(--themeColor);
+        user-select: none;
+    }
+    #nextTime{
+        position: absolute;
+        bottom: -50px;
+        left: 50%;
+        transform: translate(-50%, 0%);
+        padding: 10px 30px;
+        background-color: rgba(255, 255, 255,0.9);
+        border-radius: 30px ;
+        font-size: clamp(18px,2vw,35px);
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        color: var(--themeColor);
+        user-select: none;
+        width: 50vw;
+        text-align: center;
+    }
     body, html {
         margin: 0;
         padding: 0;
@@ -377,7 +406,7 @@
         width: 100%;
         height: 100%;
     }
-    *:not(#sliderMain):not(#infoBar):not(.optionContainer):not(#wallpaperButton):not(.wallpaperSelect) {
+    *:not(#sliderMain):not(#infoBar):not(.optionContainer):not(#wallpaperButton):not(.wallpaperSelect):not(#timerContainer) {
         box-sizing: border-box;
         max-width: 100%;
         max-height: 100%;
@@ -472,20 +501,73 @@
         background-image: url(./assets/backsplash3.png);
     }
     #timerContainer{
-        position:relative;
-        width: 200px;
-        height: 200px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .circleBackground,.circleProgress{
+        font-family: sans-serif;
+        display: grid;
+        height: clamp(400px,40vh,70vh);
+        width: 50vw;
+        place-items: center;
+        border-radius: 20px;
+        background-color: rgba(255, 255, 255, 0.8);
         position: absolute;
-        border-radius: 50%;
-        width: 180px;
-        height: 180px;
-        top: 10px;
-        left:10px;
+        top: 50%;
+        left:50%;
+        transform: translate(-50%, -50%);
+        align-content: center;
+    }
+    .base-timer {
+        position: relative;
+        width: 300px;
+    }
+
+    .base-timer__svg {
+        transform: scaleX(-1);
+    }
+
+    .base-timer__circle {
+        fill: none;
+        stroke: none;
+    }
+
+    .base-timer__path-elapsed {
+        stroke-width: 7px;
+        stroke: grey;
+    }
+
+    .base-timer__path-remaining {
+        stroke-width: 7px;
+        stroke-linecap: round;
+        transform: rotate(90deg);
+        transform-origin: center;
+        transition: 1s linear all;
+        fill-rule: nonzero;
+        stroke: currentColor;
+    }
+
+    .base-timer__path-remaining.green {
+        color: rgb(65, 184, 131);
+    }
+    .base-timer__path-remaining.blue {
+        color: rgb(85, 163, 235);
+    }
+
+    .base-timer__path-remaining.orange {
+        color: orange;
+    }
+
+    .base-timer__path-remaining.red {
+        color: red;
+    }
+
+    .base-timer__label {
+        position: absolute;
+        width: 50vw;
+        height: 50vw;
+        top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-family: Arial, Helvetica, sans-serif;
     }
 </style>
 <body>
@@ -493,7 +575,7 @@
     <div id="introScreen" style="display: block; opacity: 0;" style="overflow: hidden; ">
         <div class="container" style >
             <div style="color: #ffffff; margin-bottom: 40px; font-size: 60px; font-family:Arial, Helvetica, sans-serif;" style="overflow: hidden;">Study Roulette</div>
-            <button class="button" page="2" >Play</button>
+            <button class="button" page="2">Play</button>
         </div>
         <div id="wallpaperButton"><img width="50px" src="./assets/wallpaperButton.png" alt="wallpaperButton"></div>
         <ul id="wallpaperMenu">
@@ -598,20 +680,27 @@
                 <div class="timelines" id="option3"></div>
             </div>
             <div class="celebration" id="title" style="font-size: clamp(15px,3vw,25px); margin-top: clamp(15px,3vw,40px);">Thank you for using Study Roulette 🥳</div>
-            
         </div>
         <div style="position: absolute; width: 300px; top:45%; right: -10vw; transform: translate(-50%, -50%); width: 25vw;"><img src="./assets/Instruction1.png" alt="Hover over me!"></div>
+        <div style="position: absolute; width: 300px; top:60%; left: 13vw; transform: translate(-50%, -50%); width: 25vw;"><img src="./assets/Instruction3.png" alt="Click on me!"></div>
         <div id="restart">
             Restart?
         </div>
         
     </div>
-    <div id="timer" style="display: none; opacity: 0;">
-        <div id="timerContainer">
-            <div id="circleBackground"></div>
-            <div id="circleProgress"></div>
-            <div id="timerText">60</div>
+    <div id="timerApp" style="display: none; opacity: 0;">
+        
+        <div id="timerContainer" style="z-index: 5;">
+            <div id="timerState" style="font-size: 40px; font-family: Arial, Helvetica, sans-serif;">Study</div>
+            <div id="timer"></div>
+            <div id="nextTime">
+                Next: 30min Rest
+            </div>
         </div>
+        <div id="restart2">
+            Restart?
+        </div>
+        
     </div>
 </body>
 <script type="importmap">
@@ -643,6 +732,12 @@
     let firstTime = true;
     let clickedDice = false;
     let fading = false;
+    let chosenOption = "";
+    let option1 = [];
+    let option2 = [];
+    let option3 = [];
+    let buttonDebounce = false;
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     document.getElementById("introScreen").classList.add('animateFadeIn')
 
     function addMultipleEventListeners(element, events, handler) {
@@ -652,13 +747,18 @@
     }
     function change(page) {
         if (page==1){
+            chosenOption = "";
+            option1 = [];
+            option2 = [];
+            option3 = [];
             document.getElementById("introScreen").style.display='block';
             document.getElementById("stageSelect").style.display='none';
             document.getElementById("studySelect").style.visibility='hidden';
             document.getElementById("mainApp").style.display='none';
             document.getElementById("results").style.display='none';
+            document.getElementById("timerApp").style.display='none';
             if (document.getElementById("results").classList.contains('animateFadeIn')){document.getElementById("results").classList.remove('animateFadeIn')}
-            if (document.getElementById("timer").classList.contains('animateFadeIn')){document.getElementById("timer").classList.remove('animateFadeIn');}
+            if (document.getElementById("timerApp").classList.contains('animateFadeIn')){document.getElementById("timerApp").classList.remove('animateFadeIn');}
             document.getElementById("introScreen").classList.add('animateFadeIn')
         }else if (page==2){
             document.getElementById("introScreen").style.display='none';
@@ -666,6 +766,7 @@
             document.getElementById("studySelect").style.visibility='hidden';
             document.getElementById("mainApp").style.display='none';
             document.getElementById("results").style.display='none';
+            document.getElementById("timerApp").style.display='none';
             if (document.getElementById("introScreen").classList.contains('animateFadeIn')){document.getElementById("introScreen").classList.remove('animateFadeIn');}
             document.getElementById("stageSelect").classList.add('animateFadeIn');
 
@@ -676,6 +777,7 @@
             document.getElementById("studySelect").style.visibility='visible';
             document.getElementById("mainApp").style.display='none';
             document.getElementById("results").style.display='none';
+            document.getElementById("timerApp").style.display='none';
             if (document.getElementById("stageSelect").classList.contains('animateFadeIn')){document.getElementById("stageSelect").classList.remove('animateFadeIn');}
             document.getElementById("studySelect").classList.add('animateFadeIn');
             
@@ -685,6 +787,7 @@
             document.getElementById("studySelect").style.visibility='hidden';
             document.getElementById("mainApp").style.display='block';
             document.getElementById("results").style.display='none';
+            document.getElementById("timerApp").style.display='none';
             if (document.getElementById("studySelect").classList.contains('animateFadeIn')){document.getElementById("studySelect").classList.remove('animateFadeIn');}
             document.getElementById("mainApp").classList.add('animateFadeIn');
             renderThreeJS();
@@ -702,6 +805,7 @@
             document.getElementById("studySelect").style.visibility='hidden';
             document.getElementById("mainApp").style.display='none';
             document.getElementById("results").style.display='block';
+            document.getElementById("timerApp").style.display='none';
             if (document.getElementById("mainApp").classList.contains('animateFadeIn')){document.getElementById("mainApp").classList.remove('animateFadeIn');}
             document.getElementById("results").classList.add('animateFadeIn');
             renderResults();
@@ -711,9 +815,9 @@
             document.getElementById("studySelect").style.visibility='hidden';
             document.getElementById("mainApp").style.display='none';
             document.getElementById("results").style.display='none';
-            document.getElementById("timer").style.display='block';
+            document.getElementById("timerApp").style.display='block';
             if (document.getElementById("results").classList.contains('animateFadeIn')){document.getElementById("results").classList.remove('animateFadeIn');}
-            document.getElementById("timer").classList.add('animateFadeIn');
+            document.getElementById("timerApp").classList.add('animateFadeIn');
             renderTimer();
         }
     }
@@ -743,26 +847,31 @@
     document.addEventListener("DOMContentLoaded", ()=>{
         let pageButtons = document.querySelectorAll('[page]');
             pageButtons.forEach(button => {
-                button.addEventListener("click", () => {
+                addMultipleEventListeners(button, 'click touchstart',()=>{
                     let page = button.getAttribute("page");
                     change(Number(page));
-            });
+                });
         });
         let stageButtons = document.querySelectorAll('[difficulty]');
             stageButtons.forEach(button => {
-                button.addEventListener("click", () => {
+                addMultipleEventListeners(button, 'click touchstart',()=>{
                     let difficulty = button.getAttribute("difficulty");
                     difficultySelect(difficulty);
-            });
+                });
         });
-        document.getElementById('endButton').addEventListener('click', function() {
+        addMultipleEventListeners(document.getElementById('endButton'), 'click touchstart',()=>{
             event.stopPropagation();
             cancelAnimationFrame(animationId);
             renderer.dispose();
             renderer.domElement.remove();
             change(5);
-        });
-        document.getElementById('barButton').addEventListener('click', function() {
+            buttonDebounce = true;
+            delay(500).then(() => {
+                buttonDebounce = false
+            });
+
+        })
+        addMultipleEventListeners(document.getElementById('barButton'), 'click touchstart', ()=>{
             event.stopPropagation();
             if (!sliderMoving){
                 if (sliderOut){
@@ -779,10 +888,12 @@
                     sliderOut = true;
                 }
             }
-        });
-        document.getElementById('restart').addEventListener('click', function() {
-            change(1);
-        });
+        })
+        addMultipleEventListeners(document.getElementById('restart'), 'click touchstart', ()=>{
+            if (buttonDebounce==false){
+                change(1);
+            }
+        })
         document.querySelector(".celebration").addEventListener("pointerenter", ()=>{
             window.confetti({
                 particleCount:100,
@@ -818,15 +929,17 @@
             })
         });
         addMultipleEventListeners(document.getElementById("wallpaper3"), "click touchstart",()=>{
-            console.log("hel");
             document.querySelectorAll(".background").forEach(element =>{
                 element.style.backgroundImage = "url('./assets/backsplash3.png')";
             })
         });
-        document.querySelectorAll('.optionContainer').forEach(element =>{
-            element.addEventListener('click', function() {
-                //change(6);
-            });
+        document.querySelectorAll('.timelines').forEach(element =>{
+            addMultipleEventListeners(element, 'click touchstart',()=>{
+                if (element.id == "option1"){chosenOption="option1"}
+                if (element.id == "option2"){chosenOption="option2"}
+                if (element.id == "option3"){chosenOption="option3"}
+                change(6);
+            })
         })
         
     });
@@ -954,7 +1067,6 @@
         let tooBig = threshold > 0.65;
         let scale = tooBig ? 0.65 : threshold;
         let dice;
-        console.log(window.innerWidth *0.0008)
         loader.load('./assets/dice.glb', function(gltf){
             dice = gltf.scene;
             dice.scale.set(scale, scale, scale);
@@ -1007,7 +1119,6 @@
                     }else{
                         d1Value = getSide(dice, camera);
                         d2Value = getSide(dice2, camera);
-                        console.log("Combined "+(d2Value+d1Value));
                         tokenCalc((d2Value+d1Value));
                         rolling = false;
                         aligned=false;
@@ -1146,11 +1257,15 @@
         let timeline = document.getElementById('option1')
         let targetDiv;
         let labelDiv;
+        document.getElementById('option1').replaceChildren();
+        document.getElementById('option2').replaceChildren();
+        document.getElementById('option3').replaceChildren();
         for (let i = 0; i < breaks; i++) {
             targetDiv = document.createElement('div');
             targetDiv.style.flex = ""+segSize
             labelDiv = document.createElement('div');
             labelDiv.innerText = segSize+"min"
+            option1.push(segSize);
             labelDiv.className = "timeLabel";
             targetDiv.appendChild(labelDiv);
             timeline.appendChild(targetDiv);
@@ -1160,6 +1275,7 @@
             targetDiv.className = "restSegment";
             labelDiv = document.createElement('div');
             labelDiv.innerText = Math.round(tokens/breaks)+"min"
+            option1.push(Math.round(tokens/breaks));
             labelDiv.className = "timeLabel";
             targetDiv.appendChild(labelDiv);
             timeline.appendChild(targetDiv);
@@ -1171,6 +1287,7 @@
         targetDiv.style.flex = ""+Math.round(totalTime/2);
         labelDiv = document.createElement('div');
         labelDiv.innerText = Math.round(totalTime/2)+"min"
+        option2.push(Math.round(totalTime/2));
         labelDiv.className = "timeLabel";
         targetDiv.appendChild(labelDiv);
         timeline2.appendChild(targetDiv);
@@ -1180,6 +1297,7 @@
         targetDiv.className = "restSegment";
         labelDiv = document.createElement('div');
         labelDiv.innerText = tokens+"min"
+        option2.push(tokens);
         labelDiv.className = "timeLabel";
         targetDiv.appendChild(labelDiv);
         timeline2.appendChild(targetDiv);
@@ -1188,6 +1306,7 @@
         targetDiv.style.flex = ""+Math.round(totalTime/2);
         labelDiv = document.createElement('div');
         labelDiv.innerText = Math.round(totalTime/2)+"min"
+        option2.push(Math.round(totalTime/2));
         labelDiv.className = "timeLabel";
         targetDiv.appendChild(labelDiv);
         timeline2.appendChild(targetDiv);
@@ -1197,6 +1316,7 @@
         targetDiv.style.flex = ""+totalTime;
         labelDiv = document.createElement('div');
         labelDiv.innerText = totalTime+"min"
+        option3.push(totalTime);
         labelDiv.className = "timeLabel";
         targetDiv.appendChild(labelDiv);
         timeline3.appendChild(targetDiv);
@@ -1206,6 +1326,7 @@
         targetDiv.className = "restSegment";
         labelDiv = document.createElement('div');
         labelDiv.innerText = tokens+"min"
+        option3.push(tokens);
         labelDiv.className = "timeLabel";
         targetDiv.appendChild(labelDiv);
         timeline3.appendChild(targetDiv);
@@ -1213,25 +1334,144 @@
     }
 
     function renderTimer(){
-        const totalTime = 60;
-        let currentTime = totalTime;
-        let timerInterval;
+        const FULL_DASH_ARRAY = 283;
+        const WARNING_THRESHOLD = 10;
+        const ALERT_THRESHOLD = 5;
 
-        const circle = document.getElementById('progress');
-        const text = document.getElementById('timerText');
+        const COLOR_CODES = {
+            study: {
+                color:"green"
+            },
+            break: {
+                color: "blue",
+            }
+        };
 
-        function updateTimer(){
-            const percentage = currentTime / totalTime;
-            const strokeDashoffset = 565 - (percentage * 565);
-            circle.style.strokeDashoffset = strokeDashoffset;
-            text.textContent = currentTime;
-            if (currentTime == 0){
-                clearInterval(timerInterval);
-            }else{
-                currentTime--;
+        let TIME_LIMIT = 0
+        let timePassed = 0;
+        let timeLeft = TIME_LIMIT;
+        let timerInterval = null;
+        let remainingPathColor = COLOR_CODES.study.color;
+        let timeModifier = 1;
+        let timoutID;
+        const delay = ms => new Promise(resolve => timoutID = setTimeout(resolve, ms));
+
+        document.getElementById("timer").innerHTML = `
+            <div class="base-timer">
+            <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g class="base-timer__circle">
+                <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
+                <path
+                    id="base-timer-path-remaining"
+                    stroke-dasharray="283"
+                    class="base-timer__path-remaining ${remainingPathColor}"
+                    d="
+                    M 50, 50
+                    m -45, 0
+                    a 45,45 0 1,0 90,0
+                    a 45,45 0 1,0 -90,0
+                    "
+                ></path>
+                </g>
+            </svg>
+            <span id="base-timer-label" class="base-timer__label">${formatTime(
+                timeLeft
+            )}</span>
+            </div>
+        `;
+        addMultipleEventListeners(document.getElementById('restart2'), 'click touchstart',()=>{
+            change(1);
+            onTimesUp();
+            clearTimeout(timoutID);
+        })
+
+        async function processTimer(array) {
+            for (let i = 0; i < array.length; i++){
+                let number = array[i];
+
+                if (i % 2 === 0){
+                    document.getElementById('timerState').textContent='Study'
+                    document
+                    .getElementById("base-timer-path-remaining")
+                    .classList.remove(COLOR_CODES.break.color);
+                    document
+                    .getElementById("base-timer-path-remaining")
+                    .classList.add(COLOR_CODES.study.color);
+                }else{
+                    document.getElementById('timerState').textContent='Break'
+                    document
+                    .getElementById("base-timer-path-remaining")
+                    .classList.remove(COLOR_CODES.study.color);
+                    document
+                    .getElementById("base-timer-path-remaining")
+                    .classList.add(COLOR_CODES.break.color);
+                }
+                if ((i+1) < array.length){
+                    if (i % 2 === 0){
+                        document.getElementById("nextTime").textContent='Next: '+array[i+1]+'min break'
+                    }else{
+                        document.getElementById("nextTime").textContent='Next: '+array[i+1]+'min study'
+                    }
+                }else{
+                    document.getElementById("nextTime").textContent='Next: Finish'
+                }
+                TIME_LIMIT = (number*60)+1;
+                timePassed = 0;
+                timeLeft = TIME_LIMIT;
+                startTimer();
+                await delay(TIME_LIMIT*(1000/timeModifier));
             }
         }
-        timerInterval = setInterval(updateTimer, 1000)
+        if (chosenOption=='option1'){processTimer(option1);}
+        else if (chosenOption=='option2'){processTimer(option2);}
+        else if (chosenOption=='option3'){processTimer(option3);}
+        function onTimesUp() {
+            clearInterval(timerInterval);
+            TIME_LIMIT = 0
+            timePassed = 0;
+            timeLeft = TIME_LIMIT;
+            timerInterval = null;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timePassed = timePassed += 1;
+                timeLeft = TIME_LIMIT - timePassed;
+                document.getElementById("base-timer-label").innerHTML = formatTime(
+                timeLeft
+                );
+                setCircleDasharray();
+                if (timeLeft <= 0) {
+                    onTimesUp();
+                }
+            }, 1000/timeModifier);
+        }
+
+        function formatTime(time){
+            const minuetes = Math.floor(time / 60);
+            let seconds = time % 60;
+
+            if (seconds < 10) {
+            seconds = `0${seconds}`;
+            }
+
+            return `${minuetes}:${seconds}`;
+        }
+
+        function calculateTimeFraction() {
+            const rawTimeFraction = timeLeft / TIME_LIMIT;
+            return rawTimeFraction - (1 / TIME_LIMIT) * (1 - rawTimeFraction);
+        }
+
+        function setCircleDasharray() {
+            const circleDasharray = `${(
+                calculateTimeFraction() * FULL_DASH_ARRAY
+            ).toFixed(0)} 283`;
+            document
+                .getElementById("base-timer-path-remaining")
+                .setAttribute("stroke-dasharray", circleDasharray);
+        }
+
     }
     </script>
 </html>
