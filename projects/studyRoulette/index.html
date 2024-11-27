@@ -339,7 +339,7 @@
         transform: translate(-50%, -50%);
         width: calc(var(--vw, 1vw) * 100);
         height: calc(var(--vh, 1vh) * 100);
-        background-image: url(./assets/backsplash.png);
+        background-image: url();
         background-size: cover;
         background-position: center;
     }
@@ -740,6 +740,22 @@
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     document.getElementById("introScreen").classList.add('animateFadeIn')
 
+    const background = localStorage.getItem("background");
+    if (background == "backsplash"){
+        document.querySelectorAll(".background").forEach(element =>{
+            element.style.backgroundImage = "url('./assets/backsplash.png')";
+        });
+    }else if (background == "backsplash2"){
+        document.querySelectorAll(".background").forEach(element =>{
+            element.style.backgroundImage = "url('./assets/backsplash2.png')";
+        });
+    }else if (background == "backsplash3"){
+        document.querySelectorAll(".background").forEach(element =>{
+            element.style.backgroundImage = "url('./assets/backsplash3.png')";
+        });
+    }
+    
+
     function addMultipleEventListeners(element, events, handler) {
         events.split(' ').forEach(event => {
             element.addEventListener(event, handler);
@@ -922,16 +938,19 @@
             document.querySelectorAll(".background").forEach(element =>{
                 element.style.backgroundImage = "url('./assets/backsplash.png')";
             })
+            localStorage.setItem("background", "backsplash");
         });
         addMultipleEventListeners(document.getElementById("wallpaper2"), "click touchstart",()=>{
             document.querySelectorAll(".background").forEach(element =>{
                 element.style.backgroundImage = "url('./assets/backsplash2.png')";
             })
+            localStorage.setItem("background", "backsplash2");
         });
         addMultipleEventListeners(document.getElementById("wallpaper3"), "click touchstart",()=>{
             document.querySelectorAll(".background").forEach(element =>{
                 element.style.backgroundImage = "url('./assets/backsplash3.png')";
             })
+            localStorage.setItem("background", "backsplash3");
         });
         document.querySelectorAll('.timelines').forEach(element =>{
             addMultipleEventListeners(element, 'click touchstart',()=>{
@@ -1334,6 +1353,8 @@
     }
 
     function renderTimer(){
+        Notification.requestPermission();
+
         const FULL_DASH_ARRAY = 283;
         const WARNING_THRESHOLD = 10;
         const ALERT_THRESHOLD = 5;
@@ -1397,6 +1418,9 @@
                     document
                     .getElementById("base-timer-path-remaining")
                     .classList.add(COLOR_CODES.study.color);
+                    if (Notification.permission == "granted" && i!=0){
+                        new Notification("Time to study!");
+                    }
                 }else{
                     document.getElementById('timerState').textContent='Break'
                     document
@@ -1404,7 +1428,10 @@
                     .classList.remove(COLOR_CODES.study.color);
                     document
                     .getElementById("base-timer-path-remaining")
-                    .classList.add(COLOR_CODES.break.color);
+                    .classList.add(COLOR_CODES.break.color);;
+                    if (Notification.permission == "granted" && i!=0){
+                        new Notification("Break Time!");
+                    }
                 }
                 if ((i+1) < array.length){
                     if (i % 2 === 0){
@@ -1431,6 +1458,9 @@
             timePassed = 0;
             timeLeft = TIME_LIMIT;
             timerInterval = null;
+            document.getElementById("base-timer-label").innerHTML = formatTime(
+                0
+                );
         }
 
         function startTimer() {
